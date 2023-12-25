@@ -18,6 +18,7 @@ import org.gradle.api.Task;
 import org.gradle.api.UnknownTaskException;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
+import org.gradle.api.artifacts.ExternalModuleDependency;
 import org.gradle.api.artifacts.ProjectDependency;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.BasePlugin;
@@ -59,6 +60,10 @@ import io.quarkus.gradle.tasks.QuarkusTest;
 import io.quarkus.gradle.tasks.QuarkusTestConfig;
 import io.quarkus.gradle.tasks.QuarkusUpdate;
 import io.quarkus.gradle.tooling.GradleApplicationModelBuilder;
+import io.quarkus.gradle.tooling.ToolingUtils;
+import io.quarkus.gradle.tooling.dependency.DependencyUtils;
+import io.quarkus.gradle.tooling.dependency.ExtensionDependency;
+import io.quarkus.gradle.tooling.dependency.ProjectExtensionDependency;
 import io.quarkus.runtime.LaunchMode;
 
 public class QuarkusPlugin implements Plugin<Project> {
@@ -515,7 +520,7 @@ public class QuarkusPlugin implements Plugin<Project> {
     }
 
     private void setupQuarkusBuildTaskDeps(Project project, Project dep, Set<String> visited) {
-        if (!visited.add(dep.getPath())) {
+        if (!visited.add(dep.getGroup() + ":" + dep.getName())) {
             return;
         }
         project.getLogger().debug("Configuring {} task dependencies on {} tasks", project, dep);
@@ -555,8 +560,32 @@ public class QuarkusPlugin implements Plugin<Project> {
             }
             compilePlusRuntimeConfig.getIncoming().getDependencies()
                     .forEach(d -> {
+                        ExtensionDependency<?> extensionDependency = null;
+
                         if (d instanceof ProjectDependency) {
-                            visitProjectDep(project, ((ProjectDependency) d).getDependencyProject(), visited);
+                            Project depProject = ((ProjectDependency) d).getDependencyProject();
+                            visitProjectDep(project, depProject, visited);
+
+                            extensionDependency = DependencyUtils
+                                    .getProjectExtensionDependencyOrNull(depProject, project.getPath(), null);
+                        } else if (d instanceof ExternalModuleDependency) {
+                            Project depProject = ToolingUtils.findIncludedProject(project, (ExternalModuleDependency) d);
+
+                            if (depProject != null) {
+                                extensionDependency = DependencyUtils.getExtensionInfoOrNull(project, depProject);
+                            }
+
+                            if (extensionDependency != null) {
+                                // local dependency, so we collect also its dependencies
+                                visitProjectDep(project, depProject, visited);
+                            }
+                        }
+
+                        if (extensionDependency instanceof ProjectExtensionDependency) {
+                            visitProjectDep(
+                                    project,
+                                    ((ProjectExtensionDependency) extensionDependency).getDeploymentModule(),
+                                    visited);
                         }
                     });
         }

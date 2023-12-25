@@ -24,6 +24,7 @@ import io.quarkus.extension.gradle.dependency.DeploymentClasspathBuilder;
 import io.quarkus.extension.gradle.tasks.ExtensionDescriptorTask;
 import io.quarkus.extension.gradle.tasks.ValidateExtensionTask;
 import io.quarkus.gradle.dependency.ApplicationDeploymentClasspathBuilder;
+import io.quarkus.gradle.extension.ExtensionConstants;
 import io.quarkus.gradle.tooling.ToolingUtils;
 import io.quarkus.gradle.tooling.dependency.DependencyUtils;
 import io.quarkus.runtime.LaunchMode;
@@ -31,7 +32,7 @@ import io.quarkus.runtime.LaunchMode;
 public class QuarkusExtensionPlugin implements Plugin<Project> {
 
     public static final String DEFAULT_DEPLOYMENT_PROJECT_NAME = "deployment";
-    public static final String EXTENSION_CONFIGURATION_NAME = "quarkusExtension";
+    public static final String EXTENSION_CONFIGURATION_NAME = ExtensionConstants.EXTENSION_CONFIGURATION_NAME;
 
     public static final String EXTENSION_DESCRIPTOR_TASK_NAME = "extensionDescriptor";
     public static final String VALIDATE_EXTENSION_TASK_NAME = "validateExtension";
@@ -42,6 +43,7 @@ public class QuarkusExtensionPlugin implements Plugin<Project> {
     public void apply(Project project) {
         final QuarkusExtensionConfiguration quarkusExt = project.getExtensions().create(EXTENSION_CONFIGURATION_NAME,
                 QuarkusExtensionConfiguration.class);
+
         project.getPluginManager().apply(JavaPlugin.class);
         registerTasks(project, quarkusExt);
     }
