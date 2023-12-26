@@ -462,6 +462,12 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <!-- Kotlin Gradle Plugin -->
+            <dependency>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-gradle-plugin</artifactId>
+                <version>${kotlin.version}</version>
+            </dependency>
 
             <!-- Mockito BOM -->
             <dependency>

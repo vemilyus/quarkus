@@ -3,6 +3,9 @@ plugins {
 }
 
 dependencies {
+    // Necessary to get the correct Kapt configuration name to add the annotation processor to
+    compileOnly(libs.kotlin.gradle.plugin)
+
     implementation(libs.jackson.databind)
     implementation(libs.jackson.dataformat.yaml)
 }
