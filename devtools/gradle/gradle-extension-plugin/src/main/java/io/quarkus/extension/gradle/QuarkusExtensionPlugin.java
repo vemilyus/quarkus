@@ -21,6 +21,7 @@ import org.gradle.api.tasks.testing.Test;
 import io.quarkus.bootstrap.BootstrapConstants;
 import io.quarkus.bootstrap.model.ApplicationModel;
 import io.quarkus.extension.gradle.dependency.DeploymentClasspathBuilder;
+import io.quarkus.extension.gradle.kapt.KaptUtils;
 import io.quarkus.extension.gradle.tasks.ExtensionDescriptorTask;
 import io.quarkus.extension.gradle.tasks.ValidateExtensionTask;
 import io.quarkus.gradle.dependency.ApplicationDeploymentClasspathBuilder;
@@ -129,8 +130,12 @@ public class QuarkusExtensionPlugin implements Plugin<Project> {
                         ModuleVersionIdentifier id = artifact.getModuleVersion().getId();
                         if ("io.quarkus".equals(id.getGroup()) && "quarkus-core".equals(id.getName())
                                 && !id.getVersion().isEmpty()) {
+                            final String annotationProcessorDep = QUARKUS_ANNOTATION_PROCESSOR + ':' + id.getVersion();
+
                             annotationProcessors.add(
-                                    project.getDependencies().create(QUARKUS_ANNOTATION_PROCESSOR + ':' + id.getVersion()));
+                                    project.getDependencies().create(annotationProcessorDep));
+
+                            KaptUtils.addAnnotationProcessorToKapt(project, annotationProcessorDep);
                         }
                     }
                 });
