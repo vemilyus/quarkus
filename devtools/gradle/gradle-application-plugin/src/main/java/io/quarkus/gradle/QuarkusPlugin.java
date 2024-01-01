@@ -566,8 +566,7 @@ public class QuarkusPlugin implements Plugin<Project> {
                             Project depProject = ((ProjectDependency) d).getDependencyProject();
                             visitProjectDep(project, depProject, visited);
 
-                            extensionDependency = DependencyUtils
-                                    .getProjectExtensionDependencyOrNull(depProject, project.getPath(), null);
+                            extensionDependency = DependencyUtils.getExtensionInfoOrNull(project, depProject);
                         } else if (d instanceof ExternalModuleDependency) {
                             Project depProject = ToolingUtils.findIncludedProject(project, (ExternalModuleDependency) d);
 

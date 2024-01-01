@@ -148,17 +148,12 @@ public class QuarkusExtensionPlugin implements Plugin<Project> {
             deploymentProjectName = DEFAULT_DEPLOYMENT_PROJECT_NAME;
         }
 
-        Project deploymentProject = project.getRootProject().findProject(deploymentProjectName);
+        Project deploymentProject = ToolingUtils.findLocalProject(project, deploymentProjectName);
         if (deploymentProject == null) {
-            if (project.getParent() != null) {
-                deploymentProject = project.getParent().findProject(deploymentProjectName);
-            }
-            if (deploymentProject == null) {
-                project.getLogger().warn("Unable to find deployment project with name: " + deploymentProjectName
-                        + ". You can configure the deployment project name by setting the 'deploymentModule' property in the plugin extension.");
-            }
+            project.getLogger().warn("Unable to find deployment project with name: " + deploymentProjectName
+                    + ". You can configure the deployment project name by setting the 'deploymentModule' property in the plugin extension.");
         }
+
         return deploymentProject;
     }
-
 }

@@ -89,7 +89,7 @@ public class DependencyUtils {
     public static ExtensionDependency<?> getExtensionInfoOrNull(Project project, ResolvedArtifact artifact) {
         ModuleVersionIdentifier artifactId = artifact.getModuleVersion().getId();
 
-        ExtensionDependency<?> projectDependency = null;
+        ExtensionDependency<?> projectDependency;
 
         if (artifact.getId().getComponentIdentifier() instanceof ProjectComponentIdentifier) {
             ProjectComponentIdentifier componentId = (ProjectComponentIdentifier) artifact.getId().getComponentIdentifier();
@@ -229,25 +229,23 @@ public class DependencyUtils {
 
         Project deploymentProject = null;
 
-        if (extensionDescriptor != null && extensionDescriptor.containsKey(BootstrapConstants.PROP_DEPLOYMENT_ARTIFACT)) {
-            final ArtifactCoords deploymentArtifact = GACTV
-                    .fromString(extensionDescriptor.getProperty(BootstrapConstants.PROP_DEPLOYMENT_ARTIFACT));
-
-            deploymentProject = ToolingUtils.findLocalProject(project, deploymentArtifact);
-
-            if (deploymentProject == null && extensionConfiguration == null) {
-                throw new GradleException("Cannot find deployment project for extension " + extensionArtifactId
-                        + " with artifact coordinates " + deploymentArtifact);
-            }
-        }
-
-        if (deploymentProject == null && extensionConfiguration != null) {
+        if (extensionConfiguration != null) {
             final String deploymentProjectPath = ConfigurationUtils.getDeploymentModule(extensionConfiguration).get();
             deploymentProject = ToolingUtils.findLocalProject(extensionProject, deploymentProjectPath);
 
             if (deploymentProject == null) {
                 throw new GradleException("Cannot find deployment project for extension " + extensionArtifactId + " at path "
                         + deploymentProjectPath);
+            }
+        } else if (extensionDescriptor.containsKey(BootstrapConstants.PROP_DEPLOYMENT_ARTIFACT)) {
+            final ArtifactCoords deploymentArtifact = GACTV
+                    .fromString(extensionDescriptor.getProperty(BootstrapConstants.PROP_DEPLOYMENT_ARTIFACT));
+
+            deploymentProject = ToolingUtils.findLocalProject(project, deploymentArtifact);
+
+            if (deploymentProject == null) {
+                throw new GradleException("Cannot find deployment project for extension " + extensionArtifactId
+                        + " with artifact coordinates " + deploymentArtifact);
             }
         }
 
