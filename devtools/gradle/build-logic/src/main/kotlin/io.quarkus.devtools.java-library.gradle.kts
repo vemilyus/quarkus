@@ -43,3 +43,25 @@ tasks.named<Test>(JavaPlugin.TEST_TASK_NAME) {
         systemProperty("maven.repo.local", System.getProperty("maven.repo.local"))
     }
 }
+
+val repoBaseUrl = System.getenv("REPO_BASE_URL") ?: null
+
+if (repoBaseUrl != null && repoBaseUrl.startsWith("https://")) {
+    publishing {
+        repositories {
+            maven {
+                name = "v47 repo"
+                url = uri(
+                    repoBaseUrl
+                            + "/repository/"
+                            + if ("$version".endsWith("-SNAPSHOT")) "snapshots" else "releases"
+                )
+
+                credentials {
+                    username = System.getenv("REPO_USERNAME")
+                    password = System.getenv("REPO_PASSWORD")
+                }
+            }
+        }
+    }
+}
