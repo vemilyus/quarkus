@@ -513,9 +513,7 @@ public class QuarkusPlugin implements Plugin<Project> {
         if (dep.getState().getExecuted()) {
             setupQuarkusBuildTaskDeps(project, dep, visited);
         } else {
-            dep.afterEvaluate(p -> {
-                setupQuarkusBuildTaskDeps(project, p, visited);
-            });
+            dep.afterEvaluate(p -> setupQuarkusBuildTaskDeps(project, p, visited));
         }
     }
 
@@ -523,6 +521,7 @@ public class QuarkusPlugin implements Plugin<Project> {
         if (!visited.add(dep.getGroup() + ":" + dep.getName())) {
             return;
         }
+
         project.getLogger().debug("Configuring {} task dependencies on {} tasks", project, dep);
 
         getLazyTask(project, QUARKUS_BUILD_TASK_NAME)
@@ -560,33 +559,37 @@ public class QuarkusPlugin implements Plugin<Project> {
             }
             compilePlusRuntimeConfig.getIncoming().getDependencies()
                     .forEach(d -> {
-                        ExtensionDependency<?> extensionDependency = null;
+                        Project depProject = null;
 
                         if (d instanceof ProjectDependency) {
-                            Project depProject = ((ProjectDependency) d).getDependencyProject();
-                            visitProjectDep(project, depProject, visited);
-
-                            extensionDependency = DependencyUtils.getExtensionInfoOrNull(project, depProject);
+                            depProject = ((ProjectDependency) d).getDependencyProject();
                         } else if (d instanceof ExternalModuleDependency) {
-                            Project depProject = ToolingUtils.findIncludedProject(project, (ExternalModuleDependency) d);
-
-                            if (depProject != null) {
-                                extensionDependency = DependencyUtils.getExtensionInfoOrNull(project, depProject);
-                            }
-
-                            if (extensionDependency != null) {
-                                // local dependency, so we collect also its dependencies
-                                visitProjectDep(project, depProject, visited);
-                            }
+                            depProject = ToolingUtils.findIncludedProject(project, (ExternalModuleDependency) d);
                         }
 
-                        if (extensionDependency instanceof ProjectExtensionDependency) {
-                            visitProjectDep(
-                                    project,
-                                    ((ProjectExtensionDependency) extensionDependency).getDeploymentModule(),
-                                    visited);
+                        if (depProject == null) {
+                            return;
+                        }
+
+                        if (depProject.getState().getExecuted()) {
+                            visitLocalProject(project, depProject, visited);
+                        } else {
+                            depProject.afterEvaluate(p -> visitLocalProject(project, p, visited));
                         }
                     });
+        }
+    }
+
+    private void visitLocalProject(Project project, Project localProject, Set<String> visited) {
+        // local dependency, so we collect also its dependencies
+        visitProjectDep(project, localProject, visited);
+
+        ExtensionDependency<?> extensionDependency = DependencyUtils
+                .getExtensionInfoOrNull(project, localProject);
+
+        if (extensionDependency instanceof ProjectExtensionDependency) {
+            visitProjectDep(project,
+                    ((ProjectExtensionDependency) extensionDependency).getDeploymentModule(), visited);
         }
     }
 

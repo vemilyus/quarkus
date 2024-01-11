@@ -2,7 +2,6 @@ package io.quarkus.gradle.extension;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.gradle.api.GradleException;
 import org.gradle.api.provider.ListProperty;
@@ -13,17 +12,15 @@ import org.jetbrains.annotations.NotNull;
 // `QuarkusExtensionConfiguration` extension is provided by a different class loader
 // which prevents us from creating some interface or casting to it directly.
 public class ConfigurationUtils {
-    private static final ConcurrentHashMap<String, Method> methodCache = new ConcurrentHashMap<>();
-
     private static Object callGetter(@NotNull Object extensionConfiguration, String getterName) {
-        final Method getterMethod = methodCache.computeIfAbsent(getterName, (gn) -> {
-            try {
-                return extensionConfiguration.getClass().getMethod(getterName);
-            } catch (NoSuchMethodException e) {
-                throw new GradleException(
-                        "Didn't find method " + getterName + " on class " + extensionConfiguration.getClass().getName(), e);
-            }
-        });
+        final Method getterMethod;
+
+        try {
+            getterMethod = extensionConfiguration.getClass().getMethod(getterName);
+        } catch (NoSuchMethodException e) {
+            throw new GradleException(
+                    "Didn't find method " + getterName + " on class " + extensionConfiguration.getClass().getName(), e);
+        }
 
         try {
             return getterMethod.invoke(extensionConfiguration);
